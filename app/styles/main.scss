@@ -1,7 +1,9 @@
 $icon-font-path: "/bower_components/sass-bootstrap/fonts/";
 
 @import "partials/vars";
+@import "compass/css3";
 @import 'sass-bootstrap/lib/bootstrap';
 @import "partials/mixins";
+@import "partials/font_icons";
 @import "partials/general";
 @import "partials/logo";

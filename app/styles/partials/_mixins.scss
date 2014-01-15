@@ -7,3 +7,166 @@
   }
   @return $target / $context + 0em;
 }
+
+@function effect3d($length: 10, $color: #555500, $angle: 90) {
+  $height: 0;
+  $x: 1;
+  $y: 1;
+  @if $angle == 0 or $angle == 360 {
+    $x: 1;
+    $y: 0;
+    $xshadow: $length + 1;
+    $yshadow: 0;
+  } @else if $angle == 45 {
+    $x: 1;
+    $y: -1;
+    $xshadow: $length + 1;
+    $yshadow: -($length + 1);
+  } @else if $angle == 90 {
+    $x: 0;
+    $y: -1;
+    $xshadow: 0;
+    $yshadow: -($length + 1);
+  } @else if $angle == 135 {
+    $x: -1;
+    $y: -1;
+    $xshadow: -($length + 1);
+    $yshadow: -($length + 1);
+  } @else if $angle == 180 {
+    $x: -1;
+    $y: 0;
+    $xshadow: -($length + 1);
+    $yshadow: 0;
+  } @else if $angle == 225 {
+    $x: -1;
+    $y: 1;
+    $xshadow: -($length + 1);
+    $yshadow: $length + 1;
+  } @else if $angle == 270 {
+    $x: 0;
+    $y: 1;
+    $xshadow: 0;
+    $yshadow: $length + 1;
+  } @else if $angle == 315 {
+    $x: 1;
+    $y: 1;
+    $xshadow: $length + 1;
+    $yshadow: $length + 1;
+  }
+
+  $value: '0px 0 0 ' + $color;
+  @for $i from 0 through $length {
+    $value: '#{$value} , #{$i * $x}px #{$i * $y}px 0 ' + lighten($color, $i);
+  }
+  @return unquote($value);
+}
+
+@mixin drawRect($width: 300px, $height: 200px, $depth: 100px, $left: 100px ,$top: 50px) {
+  width: $width;
+  height: $height;
+  position: relative;
+  @include perspective(1000px);
+  >div {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    @include transform-style(preserve-3d);
+
+    figure {
+      display: block;
+      @include opacity(0.8);
+      position: absolute;
+      $boderWidth: 0;//4px if there will be 1px border
+      &:nth-child(1), &:nth-child(2) {
+        width: $width - $boderWidth;
+        height: $height - $boderWidth;
+      }
+
+      &:nth-child(3), &:nth-child(4) {
+        width: $depth - $boderWidth;
+        height: $height - $boderWidth;
+        left: $left;
+      }
+
+      &:nth-child(5), &:nth-child(6) {
+        width: $width - $boderWidth;
+        height: $depth - $boderWidth;
+        top: $top;
+      }
+
+      &:nth-child(1) {
+        background: yellow;
+        @include transform( rotateY( 0deg ) translateZ( $depth / 2) );
+      }
+      &:nth-child(2) {
+        background: black;
+        @include transform( rotateX( 180deg ) translateZ( $depth / 2) );
+      }
+      &:nth-child(3) {
+        background: green;
+        @include transform( rotateY( -90deg ) translateZ( $width / 2) );
+      }
+      &:nth-child(4) {
+        background: magenta;
+        @include transform( rotateY( 90deg ) translateZ( $width / 2) );
+      }
+      &:nth-child(5) {
+        background: blue;
+        @include transform( rotateX( 90deg ) translateZ( $height / 2) );
+      }
+      &:nth-child(6) {
+        background: red;
+        @include transform( rotateX( -90deg ) translateZ( $height / 2) );
+      }
+    }
+  }
+}
+
+
+@function parseInt($n) {
+  @return $n / ($n * 0 + 1);
+}
+
+@mixin text-3d(
+$depth,
+$color,
+$angle,
+$tweak: 0,
+$dropshadow: false
+) {
+  $angle: ($angle+90) % 360;
+  $hd: 0;
+  $sd: 0;
+  $highlight: lighten($color, 15%);
+  $shadow: darken($color, 15%);
+  $d: parseInt($depth) - 1;
+  $u: unit($depth);
+  $body: ();
+
+  @for $i from 0 through $d {
+    $b: if($i > $d/2, $d - $i, $i);
+
+    /* Build Highlight Body */
+    $thd: $hd;
+    $hd: cos($angle) + $hd;
+    $hb: if($b < $tweak, abs($hd - $thd)*$b, abs($hd - $thd)*$tweak);
+    $body: append($body, #{$hd + $u} #{$sd + $u} #{$hb + $u} $highlight, comma);
+
+    /* Build Shadow Body */
+    $tsd: $sd;
+    $sd: sin($angle) + $sd;
+    $sb: if($b < $tweak, abs($sd - $tsd)*$b, abs($sd - $tsd)*$tweak);
+    $body: append($body, #{$thd + $u} #{$sd + $u} #{$sb + $u} $shadow, comma);
+  }
+
+  $threed: if($dropshadow, ($body, #{cos($angle)*$d+$u} #{sin($angle)*$d+$u} $depth hsla(0, 0%, 0%, 1)), $body);
+
+  text-shadow: $threed;
+
+  transform: translatex(#{cos($angle)*$d*-1+$u}) translatey(#{sin($angle)*$d*-1+$u}) translatez(0);
+}
+
+h1 {
+//  @include text-3d(25px, hsl(0, 100%, 30%), 45deg, 4);
+}
+

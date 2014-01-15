@@ -10,6 +10,9 @@
 body {
   padding-top: 20px;
   padding-bottom: 20px;
+
+//  background: url(../../images/night_skyjpg.jpg) 0 0 no-repeat transparent;
+//  @include background-size(cover);
 }
 
 /* Everything but the jumbotron gets side spacing for mobile first views */
