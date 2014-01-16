@@ -139,6 +139,10 @@ module.exports = function (grunt) {
         // Compiles CoffeeScript to JavaScript
         coffee: {
             dist: {
+                options: {
+                  sourceMap: true,
+                  sourceMapDir: '.tmp/scripts_maps/' // source map files will be created here
+                },
                 files: [{
                     expand: true,
                     cwd: '<%= yeoman.app %>/scripts',
