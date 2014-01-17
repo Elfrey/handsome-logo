@@ -2,14 +2,87 @@ class window.HandsomeLogo
 
   SCREEN_WIDTH: window.innerWidth
   SCREEN_HEIGHT: window.innerHeight
-  camera: {}
-  controls: {}
-  keyboard: {}
-  renderer: {}
-  scene: {}
-  textMesh: {}
-  logoMesh: {} #logo as M letter
-  logoGroup: {}
+  camera: undefined
+  controls: undefined
+  keyboard: undefined
+  renderer: undefined
+  scene: undefined
+  textMesh: undefined
+  logoMesh: undefined #logo as M letter
+  logoGroup: undefined
+  spotlight: undefined
+  rotObjectMatrix: undefined
+  clock: new THREE.Clock()
+  delta: ->
+    @clock.getDelta()
+
+
+  rotateAroundObjectAxis: (object, axis = [0,1,0], rotateAngle = Math.PI / 2 * @delta()) ->
+    rotationMatrix = new THREE.Matrix4().identity()
+    object.rotateOnAxis( new THREE.Vector3(axis[0],axis[1],axis[2]), rotateAngle);
+
+  createLightProjector: ->
+    _this = this
+    _this.textMesh.castShadow = true
+    _this.logoMesh.castShadow = true
+    _this.logoGroup.castShadow = true
+
+    # must enable shadows on the renderer
+    _this.renderer.shadowMapEnabled = true
+
+    # "shadow cameras" show the light source and direction
+
+    # spotlight #1 -- yellow, dark shadow
+    spotlight = new THREE.SpotLight(0xffffff)
+    spotlight.position.set -60, 100, -30
+    spotlight.shadowCameraVisible = true
+    spotlight.shadowDarkness = 0.95
+    spotlight.intensity = 2
+
+    # must enable shadow casting ability for the light
+    spotlight.castShadow = true
+    _this.scene.add spotlight
+    spotlight.target = _this.logoMesh
+    _this.spotlight = spotlight
+
+    # create "light-ball" meshes
+    sphereGeometry = new THREE.SphereGeometry(10, 16, 8)
+    darkMaterial = new THREE.MeshBasicMaterial(color: 0x000000)
+    wireframeMaterial = new THREE.MeshBasicMaterial(
+      color: 0xffff00
+      wireframe: true
+      transparent: true
+    )
+    shape = THREE.SceneUtils.createMultiMaterialObject(sphereGeometry, [darkMaterial, wireframeMaterial])
+    shape.position = spotlight.position
+    _this.scene.add shape
+
+    # floor: mesh to receive shadows
+    floorTexture = new THREE.ImageUtils.loadTexture("images/checkerboard.jpg")
+    floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping
+    floorTexture.repeat.set 10, 10
+
+    # Note the change to Lambert material.
+    floorMaterial = new THREE.MeshLambertMaterial(
+      map: floorTexture
+      side: THREE.DoubleSide
+    )
+    floorGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100)
+    floor = new THREE.Mesh(floorGeometry, floorMaterial)
+    floor.position.y = -0.5
+    floor.rotation.x = Math.PI / 2
+
+    # Note the mesh is flagged to receive shadows
+    floor.receiveShadow = true
+    _this.scene.add floor
+
+
+    #position
+    _this.logoGroup.position.set(0,50,0)
+    _this.spotlight.position.set(10,0,100)
+
+
+
 
   createControl: ->
     _this = @
@@ -20,6 +93,13 @@ class window.HandsomeLogo
     $controlBlockInner = $("<div></div>",
       "class" : "logo-control-inner"
     )
+    $toggleButton = $("<button></button>",
+      "class" : "logo-control-toggle-button btn"
+      "text" : "Toggle"
+    ).on("click",->
+      $controlBlockInner.stop().slideToggle()
+    ).appendTo($controlBlock)
+
     $controlBlockInner.appendTo($controlBlock)
     controlsList = [
       {
@@ -175,7 +255,7 @@ class window.HandsomeLogo
     _this.controls = new THREE.OrbitControls(_this.camera, _this.renderer.domElement)
 
     # LIGHT
-    light = new THREE.PointLight(0xffffff)
+    light = new THREE.PointLight(0x3a87ad)
     light.position.set 0, 250, 0
     _this.scene.add light
 
@@ -392,6 +472,7 @@ class window.HandsomeLogo
   constructor: ->
     @renderScene()
     @createControl()
+    @createLightProjector()
   #end constructor
 
 $(->
