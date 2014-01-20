@@ -24,23 +24,29 @@
   <!-- endbuild -->
   <script src="bower_components/modernizr/modernizr.js"></script>
   <script id="cubeVertexShader" type="x-shader/x-vertex">
-   void main() {
-      gl_Position = projectionMatrix *
-                    modelViewMatrix *
-                    vec4(position,1.0);
-    }
+   uniform float time;
+   varying vec2 vUv;
 
+   void main() {
+      vUv = uv;
+      vec3 newPosition = position + normal * vec3(sin(time * 0.2) * 3.0);
+      gl_Position = projectionMatrix <i> modelViewMatrix </i> vec4(newPosition, 1.0);
+   }
 
   </script>
   <script id="cubeFragmentShader" type="x-shader/x-fragment">
-      void main() {
-    gl_FragColor = vec4(1.0,  // R
-                        1.0,  // G
-                        1.0,  // B
-                        0.3); // A
-  }
+      uniform float time;
+      varying vec2 vUv;
 
-  </script>
+      void main() {
+         vec2 position = -1.0 + 2.0 * vUv;
+
+         float red = abs(sin(position.x * position.y + time / 5.0));
+         float green = abs(sin(position.x * position.y + time / 4.0));
+         float blue = abs(sin(position.x * position.y + time / 3.0 ));
+         gl_FragColor = vec4(red, green, blue, 1.0);
+      }
+   </script>
 </head>
 <body>
 <!--[if lt IE 10]>
@@ -48,7 +54,6 @@
   your browser</a> to improve your experience.</p>
 <![endif]-->
 
-<div id="ThreeJS"></div>
 
 
 <!-- build:js scripts/vendor.js -->
