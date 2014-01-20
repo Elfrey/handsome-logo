@@ -90,7 +90,7 @@ class window.HandsomeLogo
 
     #hidden target for spotlight
     self.lightTarget = new THREE.Object3D()
-    self.lightTarget.position.set(150,10,-100)
+    self.lightTarget.position.set(150,450,-100)
     self.scene.add(self.lightTarget)
     self.spotlight.target = self.lightTarget
 
