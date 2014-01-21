@@ -1,7 +1,17 @@
+###
+  @description
+  @steps:
+    1. Create renderer - _createRederer()
+    2. Create scene
+
+
+###
+
 class window.HandsomeLogo
 
   SCREEN_WIDTH: window.innerWidth
   SCREEN_HEIGHT: window.innerHeight
+  FAR: 20000
   camera: undefined
   controls: undefined
   keyboard: undefined
@@ -12,115 +22,18 @@ class window.HandsomeLogo
   logoMesh: undefined #logo as M letter
   logoGroup: undefined
   spotlight: undefined
-  spolightPoint: undefined
+  spotlightPoint: undefined
   rotObjectMatrix: undefined
   clock: new THREE.Clock()
   delta: ->
     @clock.getDelta()
 
+  _createAxes: -> #ok
+    axes = new THREE.AxisHelper(100);
+    @scene.add(axes);
+  #end _createAxes
 
-  renderPostament: ->
-    self = this
-
-    texture = new THREE.ImageUtils.loadTexture("images/textures/3.png")
-    texture.wrapS = texture.wrapT = THREE.RepeatWrapping
-    texture.repeat.set 10, 1
-    material = new THREE.MeshPhongMaterial(map: texture)
-
-    post1Geometry = new THREE.CubeGeometry(
-      270,10,70
-    )
-    self.post1 = new THREE.Mesh(post1Geometry, material)
-    self.post1.position.set(0, 93, 130)
-    self.scene.add self.post1
-
-    post2Geometry = new THREE.CubeGeometry(
-      250,100,50
-    )
-    self.post2 = new THREE.Mesh(post2Geometry, material)
-    self.post2.position.set(0, 38, 130)
-    self.scene.add self.post2
-
-    on
-  #end renderPostament
-
-  rotateAroundObjectAxis: (object, axis = [0,1,0], rotateAngle = Math.PI / 2 * @delta()) ->
-    rotationMatrix = new THREE.Matrix4().identity()
-    object.rotateOnAxis( new THREE.Vector3(axis[0],axis[1],axis[2]), rotateAngle);
-  #end rotateAroundObjectAxis
-
-  createLightProjector: ->
-    self = this
-    self.textMesh.castShadow = true
-    self.logoMesh.castShadow = true
-    self.logoGroup.castShadow = true
-
-    # must enable shadows on the renderer
-    self.renderer.shadowMapEnabled = true
-
-    # "shadow cameras" show the light source and direction
-
-    # spotlight #1 -- yellow, dark shadow
-    spotlight = new THREE.SpotLight(0xffffff)
-    spotlight.position.set -60, 100, -30
-    spotlight.shadowCameraVisible = true
-    spotlight.shadowDarkness = 0.95
-    spotlight.intensity = 1
-    spotlight.distance = 0
-    spotlight.castShadow = true
-
-    # must enable shadow casting ability for the light
-    self.spotlight = spotlight
-    self.scene.add spotlight
-
-    # create "light-ball" meshes
-    sphereGeometry = new THREE.SphereGeometry(10, 16, 8)
-    darkMaterial = new THREE.MeshBasicMaterial(color: 0x000000)
-    wireframeMaterial = new THREE.MeshBasicMaterial(
-      color: 0xffff00
-      wireframe: true
-      transparent: true
-    )
-    self.spolightPoint = THREE.SceneUtils.createMultiMaterialObject(sphereGeometry, [darkMaterial, wireframeMaterial])
-    self.spolightPoint.position = spotlight.position
-    self.scene.add self.spolightPoint
-
-    #position
-    self.spotlight.position.set(0,0,250)
-
-    #hidden target for spotlight
-    self.lightTarget = new THREE.Object3D()
-    self.lightTarget.position.set(150,450,-100)
-    self.scene.add(self.lightTarget)
-    self.spotlight.target = self.lightTarget
-
-
-    #light cone - stupid idea
-    ###self.cone = new THREE.Mesh(
-      new THREE.CylinderGeometry(3, 75, 150),
-      new THREE.MeshPhongMaterial({
-        color: 0xffffff,
-        ambient: 0xffffff,
-        opacity: 0.33,
-        transparent:true
-      })
-    )
-    self.cone.position.set(14,85,250)
-    self.cone.rotation.z = 625
-    self.scene.add(self.cone)###
-
-
-    #THREE.Projector() try. Have no idea how it should works.
-#    projector = new THREE.Projector()
-#    mouse_vector = new THREE.Vector3()
-#    mouse = { x: 0, y: 0, z: 1 }
-#    ray = new THREE.Raycaster( new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0) )
-#    ray.intersectObject(self.logoMesh)
-#    self.scene.add(ray)
-#    self.scene.add(projector)
-  #end createLightProjector
-
-  renderPlanes: ->
+  _createBigBox: -> #ok
     self = @
     # floor: mesh to receive shadows
     planeTexture = new THREE.ImageUtils.loadTexture("images/checkerboard.jpg")
@@ -132,6 +45,11 @@ class window.HandsomeLogo
       map: planeTexture
       side: THREE.DoubleSide
     )
+#    planeMaterial = new THREE.MeshPhongMaterial( {
+#      color: 0xffffff
+#      ambient: 0x444444
+#      map: planeTexture
+#    } )
     planeGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100)
 
     planes = [
@@ -177,7 +95,7 @@ class window.HandsomeLogo
       }
     ]
     planeMeshes = {}
-    planes = [] #TODO comment for boxws67=s-=-=-
+    #planes = [] #TODO comment for box
     $.each(planes,->
       plane = @
 
@@ -188,33 +106,26 @@ class window.HandsomeLogo
       self.scene.add(planeMeshes[plane.name])
     )
     self.planeMeshes = planeMeshes
-#    planeBottom = new THREE.Mesh(planeGeometry, planeMaterial)
-#    planeBottom.position.x = -1000
-#    planeBottom.rotation.y = Math.PI / 2
-#    planeBottom.receiveShadow = true
-#    self.scene.add planeBottom
+  #end _createBigBox
 
-  renderSkybox: ->
+  _createCamera: -> #ok
     self = @
+    VIEW_ANGLE = 45
+    ASPECT = self.SCREEN_WIDTH / self.SCREEN_HEIGHT
+    NEAR = 0.1
+    self.camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, self.FAR)
+    self.scene.add(self.camera)
+    self.camera.position.set(0, 150, 400)
+    self.camera.lookAt(self.scene.position)
+  #end _createCamera
 
-    # SKYBOX/FOG
-    ###skyBoxGeometry = new THREE.CubeGeometry(10000, 10000, 10000)
-    skyBoxMaterial = new THREE.MeshBasicMaterial(
-      color: 0x000000
-      side: THREE.BackSide
-    )
-    skyBox = new THREE.Mesh(skyBoxGeometry, skyBoxMaterial)
-    self.scene.add(skyBox);###
+  _createControls: -> #ok
+    self = @
+    # CONTROLS
+    self.controls = new THREE.OrbitControls(self.camera, self.renderer.domElement)
+  #end _createControls
 
-    skyBoxGeometry = new THREE.CubeGeometry(4000, 4000, 4000)
-    skyBoxMaterial = new THREE.MeshBasicMaterial(
-      color: 0x000000
-      side: THREE.BackSide
-    )
-    self.skyBox = new THREE.Mesh(skyBoxGeometry, skyBoxMaterial)
-    self.scene.add self.skyBox
-
-  createControl: ->
+  _createHtmlControl: -> #ok
     self = @
     $controlBlock = $("<div></div>", {
       "id": "logo-control"
@@ -279,8 +190,6 @@ class window.HandsomeLogo
       }
     ]
 
-    controlsListHtml = ""
-
     $.each(controlsList, ->
       item = @
       if item.title is "break"
@@ -340,27 +249,17 @@ class window.HandsomeLogo
           $input.val(ui.value)
           $label.find(".value").text(ui.value)
           changePosition($input.data("type"),ui.value)
-
       )
     )
-
-#    changeScale()
-#    changePosition()
     $controlBlock.appendTo($("body"))
-  #end createControl
+  #end _createHtmlControl
 
-  groupMeshes: ->
-    self = this
-    self.logoGroup = new THREE.Object3D()
-    self.logoGroup.add(self.textMesh)
-    self.logoGroup.add(self.logoMesh)
-    #self.logoGroup.scale.set(0.5, 0.5, 0.3)
-    self.logoGroup.position.set(0,50,0)
+  _initKeyboard: -> #ok
+    self = @
+    self.keyboard = new THREEx.KeyboardState()
+  #end _initKeyboard
 
-    self.scene.add(self.logoGroup)
-  #end groupMeshes
-
-  renderLight: ->
+  _createLight: ->
     self = this
 
     # LIGHT
@@ -373,97 +272,126 @@ class window.HandsomeLogo
     self.light.intensity = 2.9
     self.light.distance = 10000
     self.scene.add self.light
+  #end _createLight
 
-  renderAxes: ->
-    axes = new THREE.AxisHelper(100);
-    @scene.add(axes);
-  #end renderAxes
-
-  renderScene: ->
+  _createLightProjector: -> #TODO not ok, with experiments
     self = this
-    self.prepareScene()
+    #    self.textMesh.castShadow = true
+    #    self.logoMesh.castShadow = true
+    #    self.logoGroup.castShadow = true
 
-    # RENDERER
-    if Detector.webgl
-      self.renderer = new THREE.WebGLRenderer(antialias: true)
-    else
-      self.renderer = new THREE.CanvasRenderer()
-    self.renderer.setSize self.SCREEN_WIDTH, self.SCREEN_HEIGHT
-    container = document.getElementById("ThreeJS")
-    container.appendChild(self.renderer.domElement)
+    # must enable shadows on the renderer
+    self.renderer.shadowMapEnabled = true
 
-    # EVENTS
-    THREEx.WindowResize(self.renderer, self.camera)
-    THREEx.FullScreen.bindKey(charCode: "m".charCodeAt(0))
+    # "shadow cameras" show the light source and direction
+    # spotlight #1 -- white, dark shadow
+    self.spotlight = new THREE.SpotLight(0xffffff)
+    self.spotlight.position.set -60, 100, -30
+    self.spotlight.shadowCameraVisible = true
+    self.spotlight.shadowDarkness = 0.95
+    self.spotlight.intensity = 1
+    self.spotlight.distance = 0
+    self.spotlight.castShadow = true
+    self.spotlight.position.set(0,0,250)
+    self.scene.add self.spotlight
 
-    # CONTROLS
-    self.controls = new THREE.OrbitControls(self.camera, self.renderer.domElement)
+    # create "light-ball" mesh
+    ###sphereGeometry = new THREE.SphereGeometry(10, 16, 8)
+    darkMaterial = new THREE.MeshBasicMaterial(color: 0x000000)
+    wireframeMaterial = new THREE.MeshBasicMaterial(
+      color: 0xffff00
+      wireframe: true
+      transparent: true
+    )
+    self.spotlightPoint = THREE.SceneUtils.createMultiMaterialObject(sphereGeometry, [darkMaterial, wireframeMaterial])
+    self.spotlightPoint.position = spotlight.position
+    self.scene.add self.spotlightPoint###
 
+    #hidden target for spotlight
+    self.lightTarget = new THREE.Object3D()
+    self.lightTarget.position.set(150,450,-100)
+    self.scene.add(self.lightTarget)
+    self.spotlight.target = self.lightTarget
 
-    self.renderPlanes()
-    self.renderAxes()
-    self.renderLogo()
-    self.renderText()
-    self.groupMeshes()
+  #end _createLightProjector
 
-    self.scene.fog = new THREE.FogExp2(0x9999ff, 0.00025)
-  #end renderScene
-
-  init: ->
-    self = @
-
-    render = ->
-      self.renderer.render(self.scene, self.camera)
-
-    update = ->
-      self.keyboard.pressed("z")
-      self.controls.update()
-
-
-
-    animate = ->
-      requestAnimationFrame animate
-      #self.spotlight.rotation.x += self.clock.getDelta()
-      #self.animateProjector()
-      if self.spotlight.target.position.x > 200
-        self.modifier = -1
-      if self.spotlight.target.position.x < -200
-        self.modifier = 1
-      x = self.spotlight.target.position.x + ( self.clock.getDelta() * self.modifier * 10)
-      self.spotlight.target.position.setX(x)
-      render()
-      update()
-
-    animate()
-  #end init
-
-  modifier: 1
-  animateProjector: ->
-    self = @
-    if self.spotlight.target.position.x > 160
-      self.modifier = -1
-    if self.spotlight.target.position.x < 140
-      self.modifier = 1
-    x = self.spotlight.target.position.x + ( self.clock.getDelta() * self.modifier)
-    self.spotlight.target.position.setX(x)
-
-  prepareScene: ->
+  _createLogo: -> #ok
     self = this
+    logoPoints = []
 
-    self.scene = new THREE.Scene()
+    logoPoints.push new THREE.Vector2(0, 0)
+    logoPoints.push new THREE.Vector2(49, 38)
+    logoPoints.push new THREE.Vector2(98, 0)
+    logoPoints.push new THREE.Vector2(98, 89)
+    logoPoints.push new THREE.Vector2(49, 50)
+    logoPoints.push new THREE.Vector2(0, 89)
 
-    VIEW_ANGLE = 45
-    ASPECT = self.SCREEN_WIDTH / self.SCREEN_HEIGHT
-    NEAR = 0.1
-    FAR = 20000
-    self.camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR)
-    self.scene.add(self.camera)
-    self.camera.position.set(0, 150, 400)
-    self.camera.lookAt(self.scene.position)
-    self.keyboard = new THREEx.KeyboardState()
-  #end prepareScene
 
-  renderLogo2: ->
+    logoShape = new THREE.Shape(logoPoints)
+    extrusionSettings =
+      amount: 60
+      curveSegments: 3
+      bevelThickness: 1
+      bevelSize: 2
+      bevelEnabled: false
+      material: 0
+      extrudeMaterial: 1
+
+    logoGeometry = new THREE.ExtrudeGeometry(logoShape, extrusionSettings)
+    materialFront = new THREE.MeshPhongMaterial(color: 0xffff00)
+    materialSide = new THREE.MeshBasicMaterial(color: 0xff8800)
+    materialArray = [materialFront, materialSide]
+    logoMaterial = new THREE.MeshFaceMaterial(materialArray)
+    logoMesh = new THREE.Mesh(logoGeometry, logoMaterial)
+
+
+    #add inner part 1
+    logoInnerPoints = []
+    logoInnerPoints.push new THREE.Vector2(9, 16)
+    logoInnerPoints.push new THREE.Vector2(43, 44)
+    logoInnerPoints.push new THREE.Vector2(8, 73)
+
+    logoInnerShape = new THREE.Shape(logoInnerPoints)
+    logoInnerGeometry = new THREE.ExtrudeGeometry(logoInnerShape, extrusionSettings)
+
+
+    logoInnerMesh = new THREE.Mesh(logoInnerGeometry, logoMaterial)
+
+    #add inner part 2
+    logoInnerPoints = []
+    logoInnerPoints.push new THREE.Vector2(89, 16)
+    logoInnerPoints.push new THREE.Vector2(89, 73)
+    logoInnerPoints.push new THREE.Vector2(55, 44)
+
+    logoInnerShape = new THREE.Shape(logoInnerPoints)
+    logoInnerGeometry = new THREE.ExtrudeGeometry(logoInnerShape, extrusionSettings)
+
+
+    logoInnerMesh2 = new THREE.Mesh(logoInnerGeometry, logoMaterial)
+
+
+    #cutting off inner parts from logoMesh
+    logoBSP = new ThreeBSP(logoMesh)
+    innerBSP = new ThreeBSP(logoInnerMesh)
+    innerBSP2 = new ThreeBSP(logoInnerMesh2)
+
+
+    materialFront = new THREE.MeshPhongMaterial(color: 0x595959)
+    materialSide = new THREE.MeshPhongMaterial(color: 0x333333)
+    materialArray = [materialFront, materialSide]
+    finalLogoMaterial = new THREE.MeshFaceMaterial(materialArray)
+
+    texture = new THREE.ImageUtils.loadTexture("images/textures/lensflare0.png")
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping
+    texture.repeat.set 0.05, 0.05
+
+    newBSP = logoBSP.subtract(innerBSP).subtract(innerBSP2)
+    self.logoMesh = newBSP.toMesh(finalLogoMaterial)
+    self.logoMesh.scale.set(0.38, 0.38, 1)
+    self.logoMesh.position.set(55, 48, 100)
+  #end _createLogo
+
+  _createLogo2: -> #TODO chekc for remove
     self = this
 
     cubeMaterialArray = []
@@ -502,104 +430,77 @@ class window.HandsomeLogo
     self.scene.add(mesh);
   #end renderLogo2
 
-  renderLogo: ->
+  _createPostament: -> #all ok
     self = this
-    logoPoints = []
 
-    logoPoints.push new THREE.Vector2(0, 0)
-    logoPoints.push new THREE.Vector2(49, 38)
-    logoPoints.push new THREE.Vector2(98, 0)
-    logoPoints.push new THREE.Vector2(98, 89)
-    logoPoints.push new THREE.Vector2(49, 50)
-    logoPoints.push new THREE.Vector2(0, 89)
-
-
-    logoShape = new THREE.Shape(logoPoints)
-    extrusionSettings =
-      amount: 60
-      curveSegments: 3
-      bevelThickness: 1
-      bevelSize: 2
-      bevelEnabled: false
-      material: 0
-      extrudeMaterial: 1
-
-    logoGeometry = new THREE.ExtrudeGeometry(logoShape, extrusionSettings)
-    materialFront = new THREE.MeshPhongMaterial(color: 0xffff00)
-    materialSide = new THREE.MeshBasicMaterial(color: 0xff8800)
-    materialArray = [materialFront, materialSide]
-    logoMaterial = new THREE.MeshFaceMaterial(materialArray)
-    logoMesh = new THREE.Mesh(logoGeometry, logoMaterial)
-    #    logoMesh.position.set(82,50,100)
-    #    self.scene.add(logoMesh)
-
-
-    #add inner part 1
-    logoInnerPoints = []
-    logoInnerPoints.push new THREE.Vector2(9, 16)
-    logoInnerPoints.push new THREE.Vector2(43, 44)
-    logoInnerPoints.push new THREE.Vector2(8, 73)
-
-    logoInnerShape = new THREE.Shape(logoInnerPoints)
-    logoInnerGeometry = new THREE.ExtrudeGeometry(logoInnerShape, extrusionSettings)
-
-
-    logoInnerMesh = new THREE.Mesh(logoInnerGeometry, logoMaterial)
-
-    #add inner part 2
-    logoInnerPoints = []
-    logoInnerPoints.push new THREE.Vector2(89, 16)
-    logoInnerPoints.push new THREE.Vector2(89, 73)
-    logoInnerPoints.push new THREE.Vector2(55, 44)
-
-    logoInnerShape = new THREE.Shape(logoInnerPoints)
-    logoInnerGeometry = new THREE.ExtrudeGeometry(logoInnerShape, extrusionSettings)
-
-
-    logoInnerMesh2 = new THREE.Mesh(logoInnerGeometry, logoMaterial)
-    #    logoInnerMesh.position.set(0,50,100)
-    #    self.scene.add(logoInnerMesh)
-
-
-    #cutting off inner parts from logoMesh
-    logoBSP = new ThreeBSP(logoMesh)
-    innerBSP = new ThreeBSP(logoInnerMesh)
-    innerBSP2 = new ThreeBSP(logoInnerMesh2)
-
-#    finalLogoMaterial = new THREE.MeshLambertMaterial(
-#      { color: 0x595959, vertexColors: THREE.VertexColors }
-#    )
-
-    materialFront = new THREE.MeshPhongMaterial(color: 0x595959)
-    materialSide = new THREE.MeshPhongMaterial(color: 0x333333)
-    materialArray = [materialFront, materialSide]
-    finalLogoMaterial = new THREE.MeshFaceMaterial(materialArray)
-
-    texture = new THREE.ImageUtils.loadTexture("images/textures/lensflare0.png")
+    texture = new THREE.ImageUtils.loadTexture("images/textures/3.png")
     texture.wrapS = texture.wrapT = THREE.RepeatWrapping
-    texture.repeat.set 0.05, 0.05
-    #finalLogoMaterial = new THREE.MeshBasicMaterial(map: texture)
+    texture.repeat.set 10, 1
+    material = new THREE.MeshPhongMaterial(map: texture)
 
-    newBSP = logoBSP.subtract(innerBSP).subtract(innerBSP2)
-    newMesh = newBSP.toMesh(finalLogoMaterial)
-    newMesh.scale.set(0.38, 0.38, 1)
-    newMesh.position.set(55, 48, 100)
+    post1Geometry = new THREE.CubeGeometry(
+      270,10,70
+    )
+    self.post1 = new THREE.Mesh(post1Geometry, material)
+    self.post1.position.set(0, 93, 130)
+    self.scene.add self.post1
 
-    self.logoMesh = newMesh
-    #self.scene.add(newMesh)
-  #end renderLogo
+    post2Geometry = new THREE.CubeGeometry(
+      250,100,50
+    )
+    self.post2 = new THREE.Mesh(post2Geometry, material)
+    self.post2.position.set(0, 38, 130)
+    self.scene.add self.post2
 
-# add a wireframe to model
-#    wireframeTexture = new THREE.MeshBasicMaterial(
-#      color: 0x000000
-#      wireframe: true
-#      transparent: true
-#    )
-#    starMesh = new THREE.Mesh(starGeometry, wireframeTexture)
-#    starMesh.position.set 0, 50, 0
-#    self.scene.add(starMesh)
+    on
+  #end _createPostament
 
-  renderText: ->
+  _createRenderer: -> #ok
+    self = this
+
+    # RENDERER
+    if Detector.webgl
+      self.renderer = new THREE.WebGLRenderer(antialias: true)
+    else
+      self.renderer = new THREE.CanvasRenderer()
+    self.renderer.setSize self.SCREEN_WIDTH, self.SCREEN_HEIGHT
+    container = document.getElementById("ThreeJS")
+    container.appendChild(self.renderer.domElement)
+
+    # EVENTS
+    THREEx.WindowResize(self.renderer, self.camera)
+    THREEx.FullScreen.bindKey(charCode: "m".charCodeAt(0))
+  #end _createRenderer
+
+  _createScene: -> #ok
+    self = this
+    self.scene = new THREE.Scene()
+    on
+  #end _createScene
+
+  _createSkybox: -> #TODO with experiment
+    self = @
+
+    # SKYBOX/FOG
+    #old skybow
+    #    skyBoxGeometry = new THREE.CubeGeometry(10000, 10000, 10000)
+    #    skyBoxMaterial = new THREE.MeshBasicMaterial(
+    #      color: 0x000000
+    #      side: THREE.BackSide
+    #    )
+    #    skyBox = new THREE.Mesh(skyBoxGeometry, skyBoxMaterial)
+    #    self.scene.add(skyBox);
+
+    skyBoxGeometry = new THREE.CubeGeometry(4000, 4000, 4000)
+    skyBoxMaterial = new THREE.MeshBasicMaterial(
+      color: 0x000000
+      side: THREE.BackSide
+    )
+    self.skyBox = new THREE.Mesh(skyBoxGeometry, skyBoxMaterial)
+    self.scene.add self.skyBox
+  #end _createSkybox
+
+  _createText: -> #ok, TODO texture
     self = this
     # add 3D text
 
@@ -633,12 +534,107 @@ class window.HandsomeLogo
     textGeom.computeBoundingBox()
     textWidth = (textGeom.boundingBox.max.x - textGeom.boundingBox.min.x)
     self.textMesh.position.set(-0.5 * textWidth, 50, 100)
-    #self.textMesh.rotation.x = -Math.PI / 4
     self.textMesh.rotation.x = 0
-    #self.scene.add(self.textMesh)
-  #end renderText
+  #end _createText
 
-  tmpLight: ->
+  _groupMeshes: -> #TODO Need to finish, group all objects
+    self = this
+    self.logoGroup = new THREE.Object3D()
+    self.logoGroup.add(self.textMesh)
+    self.logoGroup.add(self.logoMesh)
+    #self.logoGroup.scale.set(0.5, 0.5, 0.3)
+    self.logoGroup.position.set(0,50,0)
+
+    self.scene.add(self.logoGroup)
+  #end _groupMeshes
+
+  _loadJsonModel: -> #TOOD json model for projector. Need nice texture
+    self = @
+    materialScene = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
+    loader = new THREE.JSONLoader()
+    loader.load "images/models/spot1.js", (geometry) ->
+      self.projector = new THREE.Mesh(geometry, materialScene)
+      self.projector.lookAt = self.lightTarget
+      #      self.projector.rotateY(10)
+      self.projector.position.set(0,0,250)
+      sc = 1
+      self.projector.scale.set sc, sc, sc
+      self.scene.add self.projector
+
+      self.scene.remove(self.spotlightPoint)
+  #_loadJsonModel
+
+  modifier: 1
+  animateProjector: -> #TODO experiment
+    self = @
+    if self.spotlight.target.position.x > 200
+      self.modifier = -1
+    if self.spotlight.target.position.x < -200
+      self.modifier = 1
+    rotateX = ( self.clock.getDelta() * self.modifier * 100)
+    x = self.spotlight.target.position.x + rotateX
+    self.spotlight.target.position.x = x
+#    if typeof self.projector != "undefined"
+  #console.log(self.projector);
+  #self.projector.rotation.y += self.clock.getDelta() * self.modifier * 11
+  #animateProjector
+    on
+
+  rotateAroundObjectAxis: (object, axis = [0,1,0], rotateAngle = Math.PI / 2 * @delta()) -> #all ok
+    rotationMatrix = new THREE.Matrix4().identity()
+    object.rotateOnAxis( new THREE.Vector3(axis[0],axis[1],axis[2]), rotateAngle);
+  #end rotateAroundObjectAxis
+
+
+
+
+  #unsorted methods
+  _createTmpProjector: ->
+    self = @
+
+    #THREE.Projector() try. Have no idea how it should works.
+#    projector = new THREE.Projector()
+#    mouse_vector = new THREE.Vector3()
+#    mouse = { x: 0, y: 0, z: 1 }
+#    ray = new THREE.Raycaster( new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0) )
+#    ray.intersectObject(self.logoMesh)
+#    self.scene.add(ray)
+#    self.scene.add(projector)
+    self.scene.add( new THREE.AmbientLight( 0x111111 ) )
+
+    intensity = 2.5
+    distance = 100
+    c1 = 0xff0040
+    c2 = 0x0040ff
+    c3 = 0x80ff80
+    c4 = 0xffaa00
+    c5 = 0x00ffaa
+    c6 = 0xff1100
+
+    self.light1 = new THREE.PointLight( c2, intensity, distance )
+    self.scene.add( self.light1 )
+
+    dlight = new THREE.DirectionalLight( 0xffffff, 0.1 )
+    dlight.position.set( 50, 10, 0 ).normalize()
+    self.scene.add( dlight )
+
+    sphere = new THREE.SphereGeometry( 0.25, 16, 8 )
+
+    l1 = new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: c2 } ) )
+    l1.position = self.light1.position
+    self.scene.add( l1 )
+
+    self.scene.fog = new THREE.Fog( 0x040306, 10, self.FAR )
+
+    self.renderer.setClearColor( self.scene.fog.color, 1 );
+
+    self.renderer.gammaInput = true;
+    self.renderer.gammaOutput = true;
+
+    on
+  #end _createTmpProjector
+
+  tmpLight: -> #TODO experiment
     self = this
     self.scene.remove(self.light)
 
@@ -691,7 +687,7 @@ class window.HandsomeLogo
     addLight 0.08, 0.8, 0.5, 0, 0, -1000
     addLight 0.995, 0.5, 0.9, 5000, 5000, -1000
 
-  shaders: ->
+  shaders: -> #TODO shaders experiment
     self = @
     uniforms = {
       time: { type: "f", value: 0 },
@@ -707,7 +703,7 @@ class window.HandsomeLogo
     self.shaderItem = new THREE.Mesh(new THREE.CubeGeometry(100, 10, 10), itemMaterial)
     @scene.add(self.shaderItem)
 
-  smoke: ->
+  smoke: -> #TODO experiment (smoooooke on the water)
     self = @
     smokeParticles = new THREE.Geometry
     i = 0
@@ -723,21 +719,65 @@ class window.HandsomeLogo
     smoke.position.set(0,100,200)
     self.scene.add(smoke)
 
+  init: ->
+    self = @
+
+    @_createScene()
+    @_createRenderer()
+    @_createCamera()
+    @_createSkybox()
+#    @_createLight()
+    @_createLightProjector()
+
+
+
+
+    @_createBigBox()
+    @_createAxes()
+    @_createLogo()
+    @_createText()
+    @_createPostament()
+    @_loadJsonModel()
+    @_groupMeshes()
+
+    @_createControls()
+    @_initKeyboard()
+
+
+ #   @_createTmpProjector()
+
+    render = ->
+      self.renderer.render(self.scene, self.camera)
+
+    update = ->
+      self.keyboard.pressed("z")
+      self.controls.update()
+
+    animate = ->
+      requestAnimationFrame animate
+      self.animateProjector()
+#      time = Date.now() * 0.00025;
+#      z = 20
+#      d = 150;
+#
+#      self.light1.position.x = Math.sin( time * 0.7 ) * d;
+#      self.light1.position.z = Math.cos( time * 0.3 ) * d;
+      render()
+      update()
+
+    animate()
+  #end init
+
   constructor: ->
     if $("#ThreeJS").size() is 0
       return false
-    @renderScene()
-    @renderSkybox()
-    @renderLight()
-    @createLightProjector()
-    @renderPostament()
     #@shaders()
     #@smoke()
     #@tmpLight()
     #@createControl()
 
     @init()
-#end constructor
+  #end constructor
 
 $(->
   window.handsomeLogo = new HandsomeLogo()

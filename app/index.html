@@ -23,24 +23,6 @@
   <link rel="stylesheet" href="styles/main.css">
   <!-- endbuild -->
   <script src="bower_components/modernizr/modernizr.js"></script>
-  <script id="cubeVertexShader" type="x-shader/x-vertex">
-   void main() {
-      gl_Position = projectionMatrix *
-                    modelViewMatrix *
-                    vec4(position,1.0);
-    }
-
-
-  </script>
-  <script id="cubeFragmentShader" type="x-shader/x-fragment">
-      void main() {
-    gl_FragColor = vec4(1.0,  // R
-                        1.0,  // G
-                        1.0,  // B
-                        0.3); // A
-  }
-
-  </script>
 </head>
 <body>
 <!--[if lt IE 10]>
@@ -90,7 +72,7 @@
 <script src="scripts/utils/helvetiker_bold.typeface.js"></script>
 <!-- endbuild -->
 
-<!-- build:js scripts/main.js -->
+<!-- build:js(.tmp) scripts/main.js -->
 <script src="scripts/main.js"></script>
 <!-- endbuild -->
 </body>
