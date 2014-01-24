@@ -14,7 +14,7 @@ class window.HandsomeLogo
   FAR: 20000
   camera: undefined
   controls: undefined
-  keyboard: new THREEx.KeyboardState()
+  keyboard: undefined
   light: undefined
   renderer: undefined
   scene: undefined
@@ -28,9 +28,9 @@ class window.HandsomeLogo
   delta: ->
     @clock.getDelta()
 
-  _createAxis: -> #ok
-    axis = new THREE.AxisHelper(100);
-    @scene.add(axis);
+  _createAxes: -> #ok
+    axes = new THREE.AxisHelper(100);
+    @scene.add(axes);
   #end _createAxes
 
   _createBigBox: -> #ok
@@ -254,6 +254,11 @@ class window.HandsomeLogo
     $controlBlock.appendTo($("body"))
   #end _createHtmlControl
 
+  _initKeyboard: -> #ok
+    self = @
+    self.keyboard = new THREEx.KeyboardState()
+  #end _initKeyboard
+
   _createLight: ->
     self = this
 
@@ -277,6 +282,7 @@ class window.HandsomeLogo
 
     # must enable shadows on the renderer
     self.renderer.shadowMapEnabled = true
+    self.renderer.shadowMapSoft = true
 
     # "shadow cameras" show the light source and direction
     # spotlight #1 -- white, dark shadow
@@ -459,7 +465,6 @@ class window.HandsomeLogo
     else
       self.renderer = new THREE.CanvasRenderer()
     self.renderer.setSize self.SCREEN_WIDTH, self.SCREEN_HEIGHT
-    self.renderer.setClearColor(0xffffff)
     container = document.getElementById("ThreeJS")
     container.appendChild(self.renderer.domElement)
 
@@ -560,7 +565,7 @@ class window.HandsomeLogo
       self.scene.remove(self.spotlightPoint)
   #_loadJsonModel
 
-  modifier = 1
+  modifier: 1
   animateProjector: -> #TODO experiment
     self = @
     if self.spotlight.target.position.x > 200
@@ -629,27 +634,6 @@ class window.HandsomeLogo
 
     on
   #end _createTmpProjector
-
-  _tmpProjector2: ->
-    self = @
-    light = new THREE.DirectionalLight(0xffffff)
-    light.position.set 0, 2, 2
-    light.target.position.set 0, 0, 0
-    light.castShadow = true
-    light.shadowDarkness = 0.5
-    light.shadowCameraVisible = true # only for debugging
-    # these six values define the boundaries of the yellow box seen above
-    light.shadowCameraNear = 2
-    light.shadowCameraFar = 5
-    light.shadowCameraLeft = -0.5
-    light.shadowCameraRight = 0.5
-    light.shadowCameraTop = 0.5
-    light.shadowCameraBottom = -0.5
-    self.scene.add light
-
-    self.renderer.shadowMapEnabled = true
-    self.renderer.shadowMapSoft = true
-  #end _tmpProjector2
 
   tmpLight: -> #TODO experiment
     self = this
@@ -750,7 +734,7 @@ class window.HandsomeLogo
 
 
     @_createBigBox()
-    @_createAxis()
+    @_createAxes()
     @_createLogo()
     @_createText()
     @_createPostament()
@@ -758,10 +742,10 @@ class window.HandsomeLogo
     @_groupMeshes()
 
     @_createControls()
+    @_initKeyboard()
 
 
-    #@_createTmpProjector()
-    @_tmpProjector2()
+    #   @_createTmpProjector()
 
     render = ->
       self.renderer.render(self.scene, self.camera)
@@ -777,8 +761,8 @@ class window.HandsomeLogo
       #      z = 20
       #      d = 150;
       #
-      #      self.spotlight.position.x = Math.sin( time * 0.7 ) * d;
-      #      self.spotlight.position.z = Math.cos( time * 0.3 ) * d;
+      #      self.light1.position.x = Math.sin( time * 0.7 ) * d;
+      #      self.light1.position.z = Math.cos( time * 0.3 ) * d;
       render()
       update()
 
