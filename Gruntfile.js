@@ -123,6 +123,7 @@ module.exports = function (grunt) {
                 '!<%= yeoman.app %>/scripts/libs/*',
                 '!<%= yeoman.app %>/scripts/utils/*',
                 '!<%= yeoman.app %>/scripts/three.min_demo.js',
+                '!<%= yeoman.app %>/scripts/shaders_test2.js',
                 'test/spec/{,*/}*.js'
             ]
         },
@@ -143,8 +144,8 @@ module.exports = function (grunt) {
         coffee: {
             dist: {
                 options: {
-                  sourceMap: true,
-                  sourceMapDir: '.tmp/scripts_maps/' // source map files will be created here
+                    sourceMap: true,
+                    sourceMapDir: '.tmp/scripts_maps/' // source map files will be created here
                 },
                 files: [{
                     expand: true,
