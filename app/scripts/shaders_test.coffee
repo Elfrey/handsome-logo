@@ -45,11 +45,6 @@ class window.HandsomeLogo
       map: planeTexture
       side: THREE.DoubleSide
     )
-    #    planeMaterial = new THREE.MeshPhongMaterial( {
-    #      color: 0xffffff
-    #      ambient: 0x444444
-    #      map: planeTexture
-    #    } )
     planeGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100)
 
     planes = [
@@ -264,11 +259,7 @@ class window.HandsomeLogo
 
     # LIGHT
     self.light = new THREE.PointLight(0x444444)
-#    self.light = new THREE.HemisphereLight(0x808080,0xffffff)
     self.light.position.set 0, 250, 0
-    #    self.light.position.x = -1000
-    #    self.light.position.y = 0
-    #    self.light.position.z = 1000
     self.light.intensity = 2.9
     self.light.distance = 10000
     self.scene.add self.light
@@ -276,9 +267,6 @@ class window.HandsomeLogo
 
   _createLightProjector: -> #TODO not ok, with experiments
     self = this
-    #    self.textMesh.castShadow = true
-    #    self.logoMesh.castShadow = true
-    #    self.logoGroup.castShadow = true
 
     # must enable shadows on the renderer
     self.renderer.shadowMapEnabled = true
@@ -503,15 +491,6 @@ class window.HandsomeLogo
     self = @
 
     # SKYBOX/FOG
-    #old skybow
-    #    skyBoxGeometry = new THREE.CubeGeometry(10000, 10000, 10000)
-    #    skyBoxMaterial = new THREE.MeshBasicMaterial(
-    #      color: 0x000000
-    #      side: THREE.BackSide
-    #    )
-    #    skyBox = new THREE.Mesh(skyBoxGeometry, skyBoxMaterial)
-    #    self.scene.add(skyBox);
-
     skyBoxGeometry = new THREE.CubeGeometry(4000, 4000, 4000)
     skyBoxMaterial = new THREE.MeshBasicMaterial(
       color: 0x000000
@@ -563,7 +542,6 @@ class window.HandsomeLogo
     self.logoGroup = new THREE.Object3D()
     self.logoGroup.add(self.textMesh)
     self.logoGroup.add(self.logoMesh)
-    #self.logoGroup.scale.set(0.5, 0.5, 0.3)
     self.logoGroup.position.set(0,50,0)
 
     self.scene.add(self.logoGroup)
@@ -611,14 +589,6 @@ class window.HandsomeLogo
   _createTmpProjector: ->
     self = @
 
-    #THREE.Projector() try. Have no idea how it should works.
-    #    projector = new THREE.Projector()
-    #    mouse_vector = new THREE.Vector3()
-    #    mouse = { x: 0, y: 0, z: 1 }
-    #    ray = new THREE.Raycaster( new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0) )
-    #    ray.intersectObject(self.logoMesh)
-    #    self.scene.add(ray)
-    #    self.scene.add(projector)
     self.scene.add( new THREE.AmbientLight( 0x111111 ) )
 
     intensity = 2.5
@@ -708,19 +678,49 @@ class window.HandsomeLogo
 
   shaders: -> #TODO shaders experiment
     self = @
-    uniforms = {
-      time: { type: "f", value: 0 },
-      resolution: { type: "v2", value: new THREE.Vector2 },
-      texture: { type: "t", value: THREE.ImageUtils.loadTexture('images/textures/3.png') }
+    parameters = {
+      startTime: Date.now(),
+      time: 0,
+      mouseX: 0.5,
+      mouseY: 0.5,
+      screenWidth: 0,
+      screenHeight: 0
+    }
+    surface = {
+      centerX: 0,
+      centerY: 0,
+      width: 1,
+      height: 1,
+      isPanning: false,
+      isZooming: false,
+      lastX: 0,
+      lastY: 0
     }
 
-    itemMaterial = new THREE.ShaderMaterial({
+    uniforms = {
+
+      #time: parameters.time / 1000,
+      mouse: [parameters.mouseX, parameters.mouseY],
+      resolution: [parameters.screenWidth, parameters.screenHeight],
+      backbuffer: 0,
+      surfaceSize: [surface.width, surface.height],
+
+      time: { type: "f", value: 1.0 },
+      resolution: { type: "v2", value: new THREE.Vector2() }
+    }
+
+    material = new THREE.ShaderMaterial( {
+
       uniforms: uniforms,
-      vertexShader: document.getElementById('cubeVertexShader').innerHTML,
-      fragmentShader: document.getElementById('cubeFragmentShader').innerHTML
-    });
-    self.shaderItem = new THREE.Mesh(new THREE.CubeGeometry(100, 10, 10), itemMaterial)
-    @scene.add(self.shaderItem)
+      vertexShader: document.getElementById( 'vertexShader' ).textContent,
+      fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+
+    } )
+
+    mesh = new THREE.Mesh( new THREE.CubeGeometry( 10, 10, 10 ), material )
+    mesh.position.set(0,0,-200)
+    #self.scene.add( mesh )
+  #end shaders
 
   smoke: -> #TODO experiment (smoooooke on the water)
     self = @
@@ -763,8 +763,7 @@ class window.HandsomeLogo
     @_createControls()
     @_initKeyboard()
 
-
-    #   @_createTmpProjector()
+    @shaders()
 
     render = ->
       self.renderer.render(self.scene, self.camera)
@@ -776,12 +775,6 @@ class window.HandsomeLogo
     animate = ->
       requestAnimationFrame animate
       self.animateProjector()
-      #      time = Date.now() * 0.00025;
-      #      z = 20
-      #      d = 150;
-      #
-      #      self.light1.position.x = Math.sin( time * 0.7 ) * d;
-      #      self.light1.position.z = Math.cos( time * 0.3 ) * d;
       render()
       update()
 
@@ -791,10 +784,6 @@ class window.HandsomeLogo
   constructor: ->
     if $("#ThreeJS").size() is 0
       return false
-    #@shaders()
-    #@smoke()
-    #@tmpLight()
-    #@createControl()
 
     @init()
 #end constructor

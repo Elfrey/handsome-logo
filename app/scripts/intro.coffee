@@ -1,61 +1,20 @@
-#html containers
-#main objects
-# moving speed
-# main light
+particleCloud = undefined
+attributes = undefined
+group = undefined
+renderer = undefined
+composer = undefined
 init = ->
 
-  # CAMERA
-
-  # SCENE
-
-  # LIGHTS
-
-  # TEXT
-
-  # Get text from hash
-
-  # Potentially, we can extract the vertices or faces of the text to generate particles too.
-  # Geo > Vertices > Position
-
-  # Create particle objects for Three.js
   newpos = (x, y, z) ->
     new THREE.Vector3(x, y, z)
 
-  # Get a new Vector
 
-  # Release a vector back into the pool
-
-  # Create pools of vectors
-
-  # PARAMETERS
-
-  # Steadycounter
-  # Life
-  # Opacity
-  # Hue Speed
-  # Movement Speed
   generateSprite = ->
     canvas = document.createElement("canvas")
     canvas.width = 128
     canvas.height = 128
     context = canvas.getContext("2d")
 
-    # Just a square, doesnt work too bad with blur pp.
-    # context.fillStyle = "white";
-    # context.strokeStyle = "white";
-    # context.fillRect(0, 0, 63, 63) ;
-
-    # Heart Shapes are not too pretty here
-    # var x = 4, y = 0;
-    # context.save();
-    # context.scale(8, 8); // Scale so canvas render can redraw within bounds
-    # context.beginPath();
-    # context.bezierCurveTo( x + 2.5, y + 2.5, x + 2.0, y, x, y );
-    # context.bezierCurveTo( x - 3.0, y, x - 3.0, y + 3.5,x - 3.0,y + 3.5 );
-    # context.bezierCurveTo( x - 3.0, y + 5.5, x - 1.0, y + 7.7, x + 2.5, y + 9.5 );
-    # context.bezierCurveTo( x + 6.0, y + 7.7, x + 8.0, y + 5.5, x + 8.0, y + 3.5 );
-    # context.bezierCurveTo( x + 8.0, y + 3.5, x + 8.0, y, x + 5.0, y );
-    # context.bezierCurveTo( x + 3.5, y, x + 2.5, y + 2.5, x + 2.5, y + 2.5 );
     context.beginPath()
     context.arc 64, 64, 60, 0, Math.PI * 2, false
     context.lineWidth = 0.5 #0.05
@@ -71,13 +30,6 @@ init = ->
     canvas
   container = document.createElement("div")
   document.body.appendChild container
-  info = document.createElement("div")
-  info.style.position = "absolute"
-  info.style.top = "10px"
-  info.style.width = "100%"
-  info.style.textAlign = "center"
-  info.innerHTML = "Three.js - simple particle systems with shapes by <a href=\"http://www.lab4games.net/zz85/blog\">zz85</a><br>Move your mouse. Click to pause/resume."
-  container.appendChild info
   camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 2000)
   camera.position.set 0, 150, 400
   scene = new THREE.Scene()
@@ -88,7 +40,7 @@ init = ->
   pointLight = new THREE.PointLight(0xffffff, 2, 300)
   pointLight.position.set 0, 0, 0
   scene.add pointLight
-  theText = "THREE.JS"
+  theText = "HANDSOME"
   hash = document.location.hash.substr(1)
   theText = hash  if hash.length isnt 0
   material = new THREE.MeshFaceMaterial([new THREE.MeshLambertMaterial(
@@ -117,7 +69,6 @@ init = ->
   text.rotation.x = 0
   text.rotation.y = Math.PI * 2
   group = new THREE.Object3D()
-  group.add text
   scene.add group
   particlesLength = 70000
   particles = new THREE.Geometry()
@@ -185,14 +136,20 @@ init = ->
   # Heart
   x = 0
   y = 0
-  heartShape = new THREE.Shape()
-  heartShape.moveTo x + 25, y + 25
-  heartShape.bezierCurveTo x + 25, y + 25, x + 20, y, x, y
-  heartShape.bezierCurveTo x - 30, y, x - 30, y + 35, x - 30, y + 35
-  heartShape.bezierCurveTo x - 30, y + 55, x - 10, y + 77, x + 25, y + 95
-  heartShape.bezierCurveTo x + 60, y + 77, x + 80, y + 55, x + 80, y + 35
-  heartShape.bezierCurveTo x + 80, y + 35, x + 80, y, x + 50, y
-  heartShape.bezierCurveTo x + 35, y, x + 25, y + 25, x + 25, y + 25
+  shapePoints = []
+  logoPointsArray = [[0, 0], [98, 89], [98, 0], [0, 89], [0, 0]]
+
+  #  heartShape.moveTo( x + 25, y + 25 );
+  #  heartShape.bezierCurveTo( x + 25, y + 25, x + 20, y, x, y );
+  #  heartShape.bezierCurveTo( x - 30, y, x - 30, y + 35,x - 30,y + 35 );
+  #  heartShape.bezierCurveTo( x - 30, y + 55, x - 10, y + 77, x + 25, y + 95 );
+  #  heartShape.bezierCurveTo( x + 60, y + 77, x + 80, y + 55, x + 80, y + 35 );
+  #  heartShape.bezierCurveTo( x + 80, y + 35, x + 80, y, x + 50, y );
+  #  heartShape.bezierCurveTo( x + 35, y, x + 25, y + 25, x + 25, y + 25 );
+  $.each logoPointsArray, ->
+    shapePoints.push new THREE.Vector2(this[0], this[1])
+
+  heartShape = new THREE.Shape(shapePoints)
   hue = 0
   setTargetParticle = ->
     target = Pool.get()
@@ -215,7 +172,7 @@ init = ->
       timeOnShapePath += 0.00035 * delta
       timeOnShapePath -= 1  if timeOnShapePath > 1
       pointOnShape = heartShape.getPointAt(timeOnShapePath)
-      emitterpos.x = pointOnShape.x * 5 - 100
+      emitterpos.x = pointOnShape.x * 5 - 250
       emitterpos.y = -pointOnShape.y * 5 + 400
 
       # pointLight.position.copy( emitterpos );
@@ -226,9 +183,13 @@ init = ->
       values_color[target].setHSL hue, 0.6, 0.1
       pointLight.color.setHSL hue, 0.8, 0.5
 
+  i = 0
   onParticleDead = (particle) ->
     target = particle.target
     if target
+      if i is 0
+        console.log particles
+        i++
 
       # Hide the particle
       values_color[target].setRGB 0, 0, 0
@@ -259,10 +220,6 @@ init = ->
   renderer = new THREE.WebGLRenderer()
   renderer.setSize window.innerWidth, window.innerHeight
   container.appendChild renderer.domElement
-  stats = new Stats()
-  stats.domElement.style.position = "absolute"
-  stats.domElement.style.top = "0px"
-  container.appendChild stats.domElement
 
   # POST PROCESSING
   effectFocus = new THREE.ShaderPass(THREE.FocusShader)
@@ -322,6 +279,8 @@ onWindowResize = ->
   composer.reset()
 
 #
+
+#document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 onDocumentMouseDown = (event) ->
   event.preventDefault()
   mouseXOnMouseDown = event.clientX - windowHalfX
@@ -343,12 +302,9 @@ onDocumentTouchMove = (event) ->
     event.preventDefault()
     mouseX = event.touches[0].pageX - windowHalfX
     targetRotation = targetRotationOnMouseDown + (mouseX - mouseXOnMouseDown) * 0.05
-
-#
 animate = ->
   requestAnimationFrame animate
   render()
-  stats.update()
 render = ->
   delta = speed * clock.getDelta()
   particleCloud.geometry.verticesNeedUpdate = true
@@ -362,9 +318,7 @@ render = ->
 
   # renderer.render( scene, camera );
   composer.render 0.1
-
 container = undefined
-stats = undefined
 camera = undefined
 scene = undefined
 renderer = undefined
@@ -394,4 +348,3 @@ hblur = undefined
 vblur = undefined
 init()
 animate()
-document.addEventListener "mousemove", onDocumentMouseMove, false
